@@ -32,10 +32,6 @@ class RegisterForm(BaseModel):
     password: str
     role: str
 
-class LoginForm(BaseModel):
-    username: str
-    password: str
-
 # 🔐 Register
 @app.post("/api/register")
 async def register_user(data: RegisterForm):
@@ -52,6 +48,11 @@ async def register_user(data: RegisterForm):
         conn.rollback()
         return {"message": f"เกิดข้อผิดพลาด: {str(e)}"}
 
+# 📌 Schema
+class LoginForm(BaseModel):
+    username: str
+    password: str
+    
 # 🔐 Login
 @app.post("/api/login")
 async def login(data: LoginForm):
@@ -67,3 +68,23 @@ async def login(data: LoginForm):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"เกิดข้อผิดพลาด: {str(e)}")
 
+# 📌 Schema
+class ContactForm(BaseModel):
+    name: str
+    user: str
+    message: str
+
+# ✉️ Contact Admin API
+@app.post("/api/contact-admin")
+async def admin_contact(data: ContactForm):
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO admin_contact (name, username, message, created_at)
+            VALUES (%s, %s, %s, %s)
+        """, (data.name, data.user, data.message, datetime.now()))
+        conn.commit()
+        return {"message": "ส่งข้อความถึงผู้ดูแลระบบเรียบร้อยแล้ว"}
+    except Exception as e:
+        conn.rollback()
+        raise HTTPException(status_code=500, detail=f"เกิดข้อผิดพลาด: {str(e)}")
